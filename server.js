@@ -167,7 +167,7 @@ let stats = {
     wrong: 0, 
     xp: 1250, 
     elo: 1250, 
-    streak: 5, // Günlük Alışkanlık Serisi
+    streak: 5,
     answeredIds: [],
     dailyQuests: [
         { id: 1, title: "Bugün 5 Soru Çöz", target: 5, progress: 0, completed: false, reward: 50 },
@@ -190,20 +190,25 @@ let stats = {
 let nationalList = [];
 let regionalList = [];
 for(let i = 1; i <= 50; i++) {
+    let natXp = 20000 - (i * 250);
     nationalList.push({
         rank: i,
         name: getRandomName(i + 5),
         avatar: `https://api.dicebear.com/7.x/avataaars/png?seed=nat${i}`,
-        xp: 20000 - (i * 250),
+        xp: natXp,
+        level: Math.floor(natXp / 200) + 1,
         elo: 2600 - (i * 35),
         league: i <= 3 ? "Şampiyonlar Ligi 🏆" : "Altın Lig 🥇",
         city: i % 2 === 0 ? "İstanbul" : "Ankara"
     });
+    
+    let regXp = 15000 - (i * 200);
     regionalList.push({
         rank: i,
         name: i === 12 ? "Süper Öğrenci (Sen)" : getRandomName(i + 15),
         avatar: `https://api.dicebear.com/7.x/avataaars/png?seed=izm${i}`,
-        xp: 15000 - (i * 200),
+        xp: regXp,
+        level: Math.floor(regXp / 200) + 1,
         elo: 2200 - (i * 25),
         league: "Elmas Lig 💎",
         city: "İzmir",
@@ -313,7 +318,6 @@ app.put('/api/profile', (req, res) => {
     res.json({ message: "Profil güncellendi!", stats });
 });
 
-// Feynman Notları Endpointleri
 app.get('/api/feynman', (req, res) => {
     res.json(stats.feynmanNotes);
 });
@@ -322,7 +326,7 @@ app.post('/api/feynman', (req, res) => {
     const { concept, explanation } = req.body;
     const newNote = { id: Date.now(), concept, explanation };
     stats.feynmanNotes.push(newNote);
-    // Görev ilerletme
+    
     stats.dailyQuests.forEach(q => {
         if(q.id === 2 && !q.completed) {
             q.progress += 1;
@@ -354,7 +358,6 @@ app.post('/api/answer', (req, res) => {
         }
         stats.xp += gainedXp;
 
-        // Günlük Görev İlerlemesi (Soru Çözme Görevi)
         stats.dailyQuests.forEach(q => {
             if (q.id === 1 && !q.completed) {
                 q.progress += 1;
