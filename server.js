@@ -158,7 +158,6 @@ let homeCategories = [
     { title: "⚡ Fizik", tests: generateCategoryTests("⚡ Fizik", "Fizik Kulübü", "FF06B6D4") }
 ];
 
-// --- ÖĞRENCİ VERİLERİ (İSTATİSTİKLER EKLENDİ) ---
 let stats = {
     name: "Süper Öğrenci",
     bio: "çözbakalım. öğrencisi",
@@ -170,12 +169,11 @@ let stats = {
     elo: 1250, 
     streak: 5,
     answeredIds: [],
-    // Yeni Eklenen Branş Bazlı Detaylı İstatistikler (Demo Verilerle)
     subjectStats: {
-        "Matematik": { correct: 42, wrong: 8 },
-        "Fizik": { correct: 18, wrong: 12 },
-        "Türkçe": { correct: 35, wrong: 5 },
-        "İngilizce": { correct: 10, wrong: 2 }
+        "Matematik": { correct: 42, wrong: 8, target: 100 },
+        "Fizik": { correct: 18, wrong: 12, target: 80 },
+        "Türkçe": { correct: 35, wrong: 5, target: 80 },
+        "İngilizce": { correct: 10, wrong: 2, target: 50 }
     },
     dailyQuests: [
         { id: 1, title: "Bugün 5 Soru Çöz", target: 5, progress: 0, completed: false, reward: 50 },
@@ -195,6 +193,13 @@ let stats = {
         { id: 1, name: "Gözde", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Gozde", league: "Altın Lig 🥇", xp: 3400, elo: 1650 }
     ]
 };
+
+// --- GÜNÜN HAP BİLGİSİ VERİLERİ ---
+const dailyTips = [
+    { title: "Günün Hap Bilgisi 💡", content: "Paragraf sorularında önce soru kökünü oku. Zihnin metni okurken doğrudan cevabı arayacaktır. Zaman kazandırır!", category: "Taktik" },
+    { title: "ÖSYM Ne Sorar? 🎯", content: "Fizikte 'İş-Güç-Enerji' konusundan her yıl istisnasız en az 1 soru geliyor. W = F.x formülünü duvarına as!", category: "Fizik" },
+    { title: "Günün Kısayolu ⚡", content: "Matematikte sonu 5 ile biten sayıların karesini alırken: Son iki hane daima 25'tir. İlk haneyi bir fazlasıyla çarpıp başa yaz! (Örn: 35² -> 3x4=12 -> 1225)", category: "Matematik" }
+];
 
 let nationalList = [];
 let regionalList = [];
@@ -262,6 +267,12 @@ app.get('/api/tests/:id/questions', (req, res) => {
     } else {
         res.json(englishQuestions);
     }
+});
+
+// Günün Hap Bilgisi
+app.get('/api/daily-tip', (req, res) => {
+    const tip = dailyTips[Math.floor(Math.random() * dailyTips.length)];
+    res.json(tip);
 });
 
 // AI Bot Düello Başlatma
@@ -376,7 +387,6 @@ app.post('/api/feynman', (req, res) => {
 
 app.get('/api/leaderboard', (req, res) => { res.json(leaderboardData); });
 
-// SORU CEVAPLANINCA DERS BAZLI İSTATİSTİĞİ GÜNCELLEME SİSTEMİ
 app.post('/api/answer', (req, res) => {
     const { questionId, isCorrect } = req.body;
     let gainedXp = 0;
@@ -385,14 +395,13 @@ app.post('/api/answer', (req, res) => {
     if (!stats.answeredIds.includes(questionId)) {
         stats.answeredIds.push(questionId);
         
-        // Hangi dersin sorusu olduğunu ID'ye göre anlıyoruz
         let category = "İngilizce";
         if(questionId >= 1 && questionId <= 20) category = "Matematik";
         else if(questionId >= 21 && questionId <= 40) category = "Fizik";
         else if(questionId >= 41 && questionId <= 60) category = "Türkçe";
 
         if (!stats.subjectStats[category]) {
-            stats.subjectStats[category] = { correct: 0, wrong: 0 };
+            stats.subjectStats[category] = { correct: 0, wrong: 0, target: 100 };
         }
 
         if (isCorrect) { 
