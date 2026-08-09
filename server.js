@@ -129,7 +129,6 @@ const testTitlePools = {
     "⚡ Fizik": ["Fizik Mekanik", "Elektrik Manyetizma", "Optik Dalgalar", "Modern Fizik", "Fizik Net Artıran", "Kuvvet Hareket", "Enerji Momentum", "Fizik Deneme", "Zor Fizik", "ÖSYM Fizik"]
 };
 
-// 10 ADET TEST ÜRETİMİ GERİ GETİRİLDİ
 function generateCategoryTests(categoryTitle, author, color) {
     let list = [];
     let titles = testTitlePools[categoryTitle] || ["Özel Deneme"];
@@ -150,7 +149,6 @@ function generateCategoryTests(categoryTitle, author, color) {
     return list;
 }
 
-// 6 KATEGORİNİN TAMAMI GERİ GETİRİLDİ
 let homeCategories = [
     { title: "🔥 Günün Trend Denemeleri", tests: generateCategoryTests("🔥 Günün Trend Denemeleri", "YKS Kurdu", "FF6366F1") },
     { title: "🚀 Yeni Çıkanlar", tests: generateCategoryTests("🚀 Yeni Çıkanlar", "Türkçe Merkezi", "FF10B981") },
@@ -160,17 +158,25 @@ let homeCategories = [
     { title: "⚡ Fizik", tests: generateCategoryTests("⚡ Fizik", "Fizik Kulübü", "FF06B6D4") }
 ];
 
+// --- ÖĞRENCİ VERİLERİ (İSTATİSTİKLER EKLENDİ) ---
 let stats = {
     name: "Süper Öğrenci",
     bio: "çözbakalım. öğrencisi",
     avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Felix",
-    totalQuestions: 80, 
-    correct: 0, 
-    wrong: 0, 
+    totalQuestions: 132, 
+    correct: 105, 
+    wrong: 27, 
     xp: 1250, 
     elo: 1250, 
     streak: 5,
     answeredIds: [],
+    // Yeni Eklenen Branş Bazlı Detaylı İstatistikler (Demo Verilerle)
+    subjectStats: {
+        "Matematik": { correct: 42, wrong: 8 },
+        "Fizik": { correct: 18, wrong: 12 },
+        "Türkçe": { correct: 35, wrong: 5 },
+        "İngilizce": { correct: 10, wrong: 2 }
+    },
     dailyQuests: [
         { id: 1, title: "Bugün 5 Soru Çöz", target: 5, progress: 0, completed: false, reward: 50 },
         { id: 2, title: "1 Feynman Notu Ekle", target: 1, progress: 0, completed: false, reward: 80 },
@@ -190,7 +196,6 @@ let stats = {
     ]
 };
 
-// 50 KİŞİLİK LİDERLİK TABLOSU GERİ GETİRİLDİ
 let nationalList = [];
 let regionalList = [];
 for(let i = 1; i <= 50; i++) {
@@ -244,7 +249,6 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// İLGİLİ KATEGORİYE GÖRE SORU ÇEKME GERİ GETİRİLDİ
 app.get('/api/tests/:id/questions', (req, res) => {
     const testId = parseInt(req.params.id);
     const prefix = Math.floor(testId / 10);
@@ -372,6 +376,7 @@ app.post('/api/feynman', (req, res) => {
 
 app.get('/api/leaderboard', (req, res) => { res.json(leaderboardData); });
 
+// SORU CEVAPLANINCA DERS BAZLI İSTATİSTİĞİ GÜNCELLEME SİSTEMİ
 app.post('/api/answer', (req, res) => {
     const { questionId, isCorrect } = req.body;
     let gainedXp = 0;
@@ -379,17 +384,31 @@ app.post('/api/answer', (req, res) => {
     
     if (!stats.answeredIds.includes(questionId)) {
         stats.answeredIds.push(questionId);
+        
+        // Hangi dersin sorusu olduğunu ID'ye göre anlıyoruz
+        let category = "İngilizce";
+        if(questionId >= 1 && questionId <= 20) category = "Matematik";
+        else if(questionId >= 21 && questionId <= 40) category = "Fizik";
+        else if(questionId >= 41 && questionId <= 60) category = "Türkçe";
+
+        if (!stats.subjectStats[category]) {
+            stats.subjectStats[category] = { correct: 0, wrong: 0 };
+        }
+
         if (isCorrect) { 
             stats.correct += 1; 
+            stats.subjectStats[category].correct += 1;
             gainedXp = 35; 
             eloChange = 25; 
             stats.elo += eloChange;
         } else { 
             stats.wrong += 1; 
+            stats.subjectStats[category].wrong += 1;
             gainedXp = 10; 
             eloChange = -15;
             stats.elo = Math.max(500, stats.elo + eloChange);
         }
+        stats.totalQuestions = stats.correct + stats.wrong;
         stats.xp += gainedXp;
 
         stats.dailyQuests.forEach(q => {
