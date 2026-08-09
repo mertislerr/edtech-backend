@@ -160,14 +160,22 @@ let homeCategories = [
 
 let stats = {
     name: "Süper Öğrenci",
-    bio: "EdTech platformunda hedefine koşan aday.",
+    bio: "çözbakalım. öğrencisi",
     avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Felix",
     totalQuestions: 80, 
     correct: 0, 
     wrong: 0, 
     xp: 1250, 
     elo: 1250, 
+    streak: 5, // Günlük Alışkanlık Serisi
     answeredIds: [],
+    dailyQuests: [
+        { id: 1, title: "Bugün 5 Soru Çöz", target: 5, progress: 0, completed: false, reward: 50 },
+        { id: 2, title: "1 Feynman Notu Ekle", target: 1, progress: 0, completed: false, reward: 80 }
+    ],
+    feynmanNotes: [
+        { id: 1, concept: "Pisagor Teoremi", explanation: "Bir dik üçgende dik kenarların karelerinin toplamı hipotenüsün karesine eşittir." }
+    ],
     library: [
         { id: 41, title: "Matematik Zirve #1", category: "Matematik", progress: 0, correct: 0, wrong: 0, total: 20, color: "FF8B5CF6", imageUrl: demoImages[0] },
         { id: 61, title: "Fizik Mekanik #1", category: "Fizik", progress: 0, correct: 0, wrong: 0, total: 20, color: "FF06B6D4", imageUrl: demoImages[1] },
@@ -227,19 +235,18 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// TEST ID'sine göre doğru dersin sorularını döndüren Endpoint
 app.get('/api/tests/:id/questions', (req, res) => {
     const testId = parseInt(req.params.id);
     const prefix = Math.floor(testId / 10);
     
     if (prefix === 6) {
-        res.json(physicsQuestions); // Fizik (20 Soru)
+        res.json(physicsQuestions);
     } else if (prefix === 5) {
-        res.json(turkceQuestions); // Türkçe (20 Soru)
+        res.json(turkceQuestions);
     } else if (prefix === 4) {
-        res.json(mathQuestions); // Matematik (20 Soru)
+        res.json(mathQuestions);
     } else {
-        res.json(englishQuestions); // İngilizce / Trend (20 Soru)
+        res.json(englishQuestions);
     }
 });
 
@@ -274,7 +281,7 @@ app.get('/api/instructors/:name', (req, res) => {
 });
 
 app.post('/api/tests/import', (req, res) => {
-    const { title, author, categoryTitle, price, description, questionContent, optA, optB, optC, optD, optE, correctOption } = req.body;
+    const { title, author, categoryTitle, price, description } = req.body;
     const newTestId = Date.now();
     const newTest = {
         id: newTestId,
@@ -303,23 +310,28 @@ app.put('/api/profile', (req, res) => {
     if (name) stats.name = name;
     if (bio) stats.bio = bio;
     if (avatar) stats.avatar = avatar;
-    res.json({ message: "Profil başarıyla güncellendi!", stats });
+    res.json({ message: "Profil güncellendi!", stats });
 });
 
-app.put('/api/instructors/:name', (req, res) => {
-    const name = req.params.name;
-    const { bio, avatar, specialty } = req.body;
-    if (instructors[name]) {
-        if (bio) instructors[name].bio = bio;
-        if (avatar) instructors[name].avatar = avatar;
-        if (specialty) instructors[name].specialty = specialty;
-        res.json({ message: "Eğitmen profili güncellendi!", instructor: instructors[name] });
-    } else {
-        res.status(404).json({ error: "Eğitmen bulunamadı" });
-    }
+// Feynman Notları Endpointleri
+app.get('/api/feynman', (req, res) => {
+    res.json(stats.feynmanNotes);
 });
 
-app.get('/api/questions', (req, res) => { res.json(mathQuestions); });
+app.post('/api/feynman', (req, res) => {
+    const { concept, explanation } = req.body;
+    const newNote = { id: Date.now(), concept, explanation };
+    stats.feynmanNotes.push(newNote);
+    // Görev ilerletme
+    stats.dailyQuests.forEach(q => {
+        if(q.id === 2 && !q.completed) {
+            q.progress += 1;
+            if(q.progress >= q.target) { q.completed = true; stats.xp += q.reward; }
+        }
+    });
+    res.json({ success: true, note: newNote, stats });
+});
+
 app.get('/api/leaderboard', (req, res) => { res.json(leaderboardData); });
 
 app.post('/api/answer', (req, res) => {
@@ -341,11 +353,22 @@ app.post('/api/answer', (req, res) => {
             stats.elo = Math.max(500, stats.elo + eloChange);
         }
         stats.xp += gainedXp;
+
+        // Günlük Görev İlerlemesi (Soru Çözme Görevi)
+        stats.dailyQuests.forEach(q => {
+            if (q.id === 1 && !q.completed) {
+                q.progress += 1;
+                if (q.progress >= q.target) {
+                    q.completed = true;
+                    stats.xp += q.reward;
+                }
+            }
+        });
     }
     
     const rankInfo = getRankInfo(stats.elo);
     const levelInfo = getLevelInfo(stats.xp);
-    res.json({ message: "Cevap kaydedildi!", gainedXp, eloChange, currentElo: stats.elo, rankTitle: rankInfo.title, levelInfo });
+    res.json({ message: "Cevap kaydedildi!", gainedXp, eloChange, currentElo: stats.elo, rankTitle: rankInfo.title, levelInfo, dailyQuests: stats.dailyQuests });
 });
 
 app.get('/api/stats', (req, res) => {
@@ -354,5 +377,5 @@ app.get('/api/stats', (req, res) => {
     res.json({ ...stats, rankTitle: rankInfo.title, levelInfo });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => { console.log(`Sunucu ${PORT} portunda çalışıyor! 🚀`); });
