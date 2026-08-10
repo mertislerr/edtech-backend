@@ -5,6 +5,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// --- SUNUCU UYANDIRMA / SAĞLIK KONTROLÜ (PING) ---
+app.get('/api/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
 // --- 1. MATEMATİK SORULARI (20 Adet) ---
 const mathQuestions = [
     { id: 1, question_image_url: "2x + 4 = 10 ise x kaçtır?", options: { "A": "1", "B": "2", "C": "3", "D": "4", "E": "5" }, correct_option: "C", video_solution_url: "https://ornekvideo.com/video1.mp4" },
@@ -283,7 +288,7 @@ app.post('/api/duel/start', (req, res) => {
         { name: "Fizik Canavarı Bot ⚡", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Bot3", elo: 1600, accuracy: 0.70 }
     ];
     const opponent = aiBots[Math.floor(Math.random() * aiBots.length)];
-    const questions = mathQuestions.slice(0, 3); // 3 soruluk hızlı düello
+    const questions = mathQuestions.slice(0, 3);
     res.json({ opponent, questions });
 });
 
