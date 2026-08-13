@@ -478,4 +478,36 @@ app.post('/api/teacher/upload-pdf', upload.single('pdf'), async (req, res) => {
 app.post('/api/teacher/crop-question', express.json(), async (req, res) => {
     // ... fonksiyon içeriği ...
 });
+app.post('/api/teacher/save-test', express.json(), async (req, res) => {
+    try {
+        const { testTitle, subject, questions } = req.body;
+        
+        if (!questions || questions.length === 0) {
+            return res.status(400).json({ error: "Testte hiç soru yok." });
+        }
+
+        const newTest = {
+            id: Date.now(),
+            title: testTitle || "Adsız Soru Testi",
+            subject: subject || "Matematik",
+            questions: questions,
+            createdAt: new Date()
+        };
+
+        res.json({ 
+            success: true, 
+            testId: newTest.id, 
+            message: "Test başarıyla yayınlandı ve öğrencilere açıldı! 🎓" 
+        });
+    } catch (error) {
+        console.error("Test Kaydetme Hatası:", error);
+        res.status(500).json({ error: "Test kaydedilirken bir hata oluştu." });
+    }
+});
+// ------------------------------------------------
+
+// Sunucunun ayağa kalktığı en alt satır
+app.listen(3000, () => {
+    console.log("Sunucu çalışıyor...");
+});
 app.listen(PORT, () => { console.log(`Sunucu ${PORT} portunda çalışıyor! 🚀`); });
