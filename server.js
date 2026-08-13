@@ -1,17 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const express = require('express');
-const app = express();
-
-// --- BURAYA EKLEYECEKSİN (EN ÜST KISIM) ---
-const multer = require('multer');
-const { fromPath } = require('pdf2pic');
-const sharp = require('sharp');
-const path = require('path');
-const fs = require('fs');
-
-const upload = multer({ dest: 'uploads/' });
-// ------------------------------------------
 
 const app = express();
 app.use(cors());
@@ -292,7 +280,7 @@ app.get('/api/daily-tip', (req, res) => {
     res.json(tip);
 });
 
-// AI Bot Düello Başlatma (KARIŞIK SORULAR & RULET İÇİN GÜNCELLENDİ)
+// AI Bot Düello Başlatma
 app.post('/api/duel/start', (req, res) => {
     const aiBots = [
         { name: "YKS Robotu 🤖", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Bot1", elo: 1500, accuracy: 0.65 },
@@ -300,19 +288,7 @@ app.post('/api/duel/start', (req, res) => {
         { name: "Fizik Canavarı Bot ⚡", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Bot3", elo: 1600, accuracy: 0.70 }
     ];
     const opponent = aiBots[Math.floor(Math.random() * aiBots.length)];
-    
-    // Tüm kategorilerden soruları birleştirip, yanlarına hangi derse ait olduklarını etiketliyoruz
-    let mixedQuestions = [
-        ...mathQuestions.map(q => ({ ...q, subject: 'Matematik' })),
-        ...physicsQuestions.map(q => ({ ...q, subject: 'Fizik' })),
-        ...turkceQuestions.map(q => ({ ...q, subject: 'Türkçe' })),
-        ...englishQuestions.map(q => ({ ...q, subject: 'İngilizce' }))
-    ];
-
-    // Soruları rastgele karıştır ve ilk 3'ünü seç
-    mixedQuestions.sort(() => 0.5 - Math.random());
-    const questions = mixedQuestions.slice(0, 3);
-
+    const questions = mathQuestions.slice(0, 3);
     res.json({ opponent, questions });
 });
 
@@ -472,10 +448,4 @@ app.get('/api/stats', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.post('/api/teacher/upload-pdf', upload.single('pdf'), async (req, res) => {
-    // ... fonksiyon içeriği ...
-});
-app.post('/api/teacher/crop-question', express.json(), async (req, res) => {
-    // ... fonksiyon içeriği ...
-});
 app.listen(PORT, () => { console.log(`Sunucu ${PORT} portunda çalışıyor! 🚀`); });
