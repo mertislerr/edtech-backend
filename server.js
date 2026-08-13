@@ -281,6 +281,7 @@ app.get('/api/daily-tip', (req, res) => {
 });
 
 // AI Bot Düello Başlatma
+// AI Bot Düello Başlatma (KARIŞIK SORULAR & RULET İÇİN GÜNCELLENDİ)
 app.post('/api/duel/start', (req, res) => {
     const aiBots = [
         { name: "YKS Robotu 🤖", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Bot1", elo: 1500, accuracy: 0.65 },
@@ -288,7 +289,19 @@ app.post('/api/duel/start', (req, res) => {
         { name: "Fizik Canavarı Bot ⚡", avatar: "https://api.dicebear.com/7.x/avataaars/png?seed=Bot3", elo: 1600, accuracy: 0.70 }
     ];
     const opponent = aiBots[Math.floor(Math.random() * aiBots.length)];
-    const questions = mathQuestions.slice(0, 3);
+    
+    // Tüm kategorilerden soruları birleştirip, yanlarına hangi derse ait olduklarını etiketliyoruz
+    let mixedQuestions = [
+        ...mathQuestions.map(q => ({ ...q, subject: 'Matematik' })),
+        ...physicsQuestions.map(q => ({ ...q, subject: 'Fizik' })),
+        ...turkceQuestions.map(q => ({ ...q, subject: 'Türkçe' })),
+        ...englishQuestions.map(q => ({ ...q, subject: 'İngilizce' }))
+    ];
+
+    // Soruları rastgele karıştır ve ilk 3'ünü seç
+    mixedQuestions.sort(() => 0.5 - Math.random());
+    const questions = mixedQuestions.slice(0, 3);
+
     res.json({ opponent, questions });
 });
 
