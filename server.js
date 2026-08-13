@@ -1,5 +1,17 @@
 const express = require('express');
 const cors = require('cors');
+const express = require('express');
+const app = express();
+
+// --- BURAYA EKLEYECEKSİN (EN ÜST KISIM) ---
+const multer = require('multer');
+const { fromPath } = require('pdf2pic');
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
+
+const upload = multer({ dest: 'uploads/' });
+// ------------------------------------------
 
 const app = express();
 app.use(cors());
@@ -460,4 +472,10 @@ app.get('/api/stats', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.post('/api/teacher/upload-pdf', upload.single('pdf'), async (req, res) => {
+    // ... fonksiyon içeriği ...
+});
+app.post('/api/teacher/crop-question', express.json(), async (req, res) => {
+    // ... fonksiyon içeriği ...
+});
 app.listen(PORT, () => { console.log(`Sunucu ${PORT} portunda çalışıyor! 🚀`); });
